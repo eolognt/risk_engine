@@ -1,0 +1,83 @@
+<html>
+<head>
+  <title>Game</title>
+</head>
+<body>
+</body>
+<script type="module" src="Game.js"></script>
+<script type="module">
+import {Game, Player} from './Game.js';
+let game;
+function startGame () {
+  let players = [new Player('Olov'), new Player('Sven')];
+  game = new Game(players);
+}
+
+function printGameBoard(territories) {
+  let terr = [];
+  for (let territory of territories.values()) {
+    let obj = {};
+    obj.name = territory.name;
+    obj.owner = territory.owner.name;
+    obj.troops = territory.troops;
+    terr.push(obj);
+  }
+  console.table(terr);
+}
+
+startGame();
+let terr = game.getTerritories();
+printGameBoard(terr);
+while (game.getPhase() === 'supply.supply') {
+  let num = parseInt(Math.random() * 2);
+  game.placeTroops(game.getCurrentPlayer().territories[num]);
+}
+printGameBoard(terr);
+while (game.getPhase() === 'round.supply') {
+  let player = game.getCurrentPlayer();
+  let num = parseInt(Math.random() * player.territories.length);
+  game.placeTroops(player.territories[num]);
+}
+printGameBoard(terr);
+let myTerr = game.getCurrentPlayer().territories[0];
+let enemyTerr;
+for (let el of terr.values()) {
+  if (el.owner !== game.getCurrentPlayer()) {
+    enemyTerr = el;
+    break;
+  }
+}
+
+let def = Math.min(enemyTerr.troops, 2);
+let att = Math.min(myTerr.troops - 1, 3);
+let c = 0;
+while (game.getPhase() === 'round.attack' && att > 0) {
+  c++;
+  if (c > 1000) {
+    c = 0;
+    break;
+  }
+  game.fight(myTerr, enemyTerr, att, def);
+  def = Math.min(enemyTerr.troops, 2);
+  att = Math.min(myTerr.troops - 1, 3);
+}
+printGameBoard(terr);
+if (game.getPhase() === 'round.attack.move') {
+  game.move(att);
+}
+game.endAttacking();
+let player = game.getCurrentPlayer();
+game.retreat(player.territories[0], player.territories[1], player.territories[0].troops - 1);
+player = game.getCurrentPlayer();
+while (game.getPhase() === 'round.supply') {
+  c++;
+  if (c > 1000) {
+    c = 0;
+    break;
+  }
+  let num = parseInt(Math.random() * player.territories.length);
+  game.placeTroops(player.territories[num]);
+}
+printGameBoard(terr);
+</script>
+</html>
